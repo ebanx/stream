@@ -8,7 +8,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: php-actions/composer@v1
+      - name: Cache composer dependencies
+        uses: actions/cache@v1
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+      - uses: php-actions/composer@v4
       - name: PHPUnit Tests
         uses: php-actions/phpunit@v1
         with:
