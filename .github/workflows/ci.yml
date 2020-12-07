@@ -1,0 +1,20 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache composer dependencies
+        uses: actions/cache@v2
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+      - uses: php-actions/composer@v1
+      - name: PHPUnit Tests
+        uses: php-actions/phpunit@v1
+        with:
+          configuration: test/phpunit.xml

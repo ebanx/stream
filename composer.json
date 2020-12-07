@@ -5,7 +5,7 @@
     "license": "MIT",
     "version": "1.0.0",
     "autoload": {
-        "psr-4": {"EBANX\\Stream\\": "lib/"}
+        "psr-4": {"EBANX\\Stream\\": "src/"}
     },
     "require": {
         "php": "^7.1"
