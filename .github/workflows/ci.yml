@@ -13,7 +13,7 @@ jobs:
         with:
           path: vendor
           key: composer-${{ hashFiles('composer.lock') }}
-      - uses: php-actions/composer@v4
+      - uses: php-actions/composer@v1
       - name: PHPUnit Tests
         uses: php-actions/phpunit@v1
         with:
