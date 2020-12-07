@@ -1,0 +1,16 @@
+{
+    "name": "ebanx/stream",
+    "description": "A library to help working with streams of data in PHP",
+    "type": "library",
+    "license": "MIT",
+    "version": "1.0.0",
+    "autoload": {
+        "psr-4": {"EBANX\\Stream\\": "lib/"}
+    },
+    "require": {
+        "php": "^7.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^7.5"
+    }
+}
