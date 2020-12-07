@@ -1,6 +1,6 @@
 <?php
 
-namespace Test\EBANX\Util;
+namespace Test\EBANX\Stream;
 
 use EBANX\Stream\Stream;
 use PHPUnit\Framework\TestCase;
