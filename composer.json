@@ -4,6 +4,7 @@
     "type": "library",
     "license": "MIT",
     "version": "1.0.0",
+    "minimum-stability": "stable",
     "autoload": {
         "psr-4": {"EBANX\\Stream\\": "src/"}
     },
