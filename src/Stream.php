@@ -368,6 +368,26 @@ class Stream implements \Iterator {
 		return new self($generator(...$streams));
 	}
 
+	/**
+	 * Executes a Cartesian product of the current stream (set A) with the given iterable (set B).
+	 * The Cartesian product (AxB) returns subsets combining all elements of A with all elements of B.
+	 * Each combination is contained in a array.
+	 * It consumes the given stream.
+	 *
+	 * @param iterable $stream
+	 * @return Stream
+	 */
+	public function cartesianProduct(iterable $stream): Stream {
+		$generator = function ($set_b) {
+			foreach ($this as $element_a) {
+				foreach ($set_b as $element_b) {
+					yield [$element_a, $element_b];
+				}
+			}
+		};
+		return new self($generator(iterator_to_array($stream)));
+	}
+
 	private static function range($start, $end, $step): self {
 		$generatorAscending = function () use ($start, $end, $step) {
 			for ($i = $start; $i <= $end; $i += $step) {
