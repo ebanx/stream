@@ -278,6 +278,39 @@ OUTPUT;
 		self::assertFalse($was_test_function_called);
 	}
 
+	public function testCartesianProduct_SameSizes(): void {
+		$stream_1 = Stream::rangeInt(1, 3);
+		$stream_2 = Stream::of(new \ArrayIterator(['a', 'b', 'c']));
+
+		$result = $stream_1->cartesianProduct($stream_2)
+			->collect();
+		self::assertEquals(
+			[
+				[1, 'a'], [1, 'b'], [1, 'c'],
+				[2, 'a'], [2, 'b'], [2, 'c'],
+				[3, 'a'], [3, 'b'], [3, 'c'],
+			],
+			$result
+		);
+	}
+
+	public function testCartesianProduct_DifferentSizes(): void {
+		$stream_1 = Stream::rangeInt(1, 4);
+		$stream_2 = Stream::of(new \ArrayIterator(['a', 'b']));
+
+		$result = $stream_1->cartesianProduct($stream_2)
+			->collect();
+		self::assertEquals(
+			[
+				[1, 'a'], [1, 'b'],
+				[2, 'a'], [2, 'b'],
+				[3, 'a'], [3, 'b'],
+				[4, 'a'], [4, 'b'],
+			],
+			$result
+		);
+	}
+
 	private function assertStreamIsNotConsumableAnymore(Stream $remaining_stream): void {
 		$this->expectException(\Exception::class);
 		$this->expectExceptionMessage('Cannot rewind a generator that was already run');
