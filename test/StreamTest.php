@@ -311,6 +311,17 @@ OUTPUT;
 		);
 	}
 
+	public function testInspect(): void {
+		$stream = Stream::rangeInt(1, 5);
+		$output = '';
+		$result = $stream->inspect(function (int $number) use (&$output) {
+			$output .= $number . ', ';
+		})
+			->collect();
+		self::assertEquals([1, 2, 3, 4, 5], $result);
+		self::assertEquals('1, 2, 3, 4, 5, ', $output);
+	}
+
 	private function assertStreamIsNotConsumableAnymore(Stream $remaining_stream): void {
 		$this->expectException(\Exception::class);
 		$this->expectExceptionMessage('Cannot rewind a generator that was already run');
