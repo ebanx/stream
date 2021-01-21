@@ -388,6 +388,23 @@ class Stream implements \Iterator {
 		return new self($generator(iterator_to_array($stream)));
 	}
 
+	/**
+	 * Execute the given callable against every stream element without changing each element.
+	 * CAUTION: Since PHP likes to pass objects around as reference, this can result in the element
+	 * being modified.
+	 *
+	 * Does not consumes the stream.
+	 *
+	 * @param callable $callback
+	 * @return Stream
+	 */
+	public function inspect(callable $callback): Stream {
+		return $this->map(function ($data) use ($callback) {
+			$callback($data);
+			return $data;
+		});
+	}
+
 	private static function range($start, $end, $step): self {
 		$generatorAscending = function () use ($start, $end, $step) {
 			for ($i = $start; $i <= $end; $i += $step) {
