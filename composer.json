@@ -3,7 +3,7 @@
     "description": "A library to help working with streams of data in PHP",
     "type": "library",
     "license": "MIT",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "minimum-stability": "stable",
     "autoload": {
         "psr-4": {"EBANX\\Stream\\": "src/"}
