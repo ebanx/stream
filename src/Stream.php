@@ -292,6 +292,32 @@ class Stream implements \Iterator {
 	}
 
 	/**
+	 * Get the min value of the stream. If two elements have the same value, the first one found is returned.
+	 * This method consumes the stream.
+	 *
+	 * @param callable|null $compare_function By default, a comparison using PHP's <=> (spaceship) operator is performed.
+	 *  You may provide a $compare_function returning -1, 0, or 1 for two given elements to change this behaviour.
+	 * @return mixed
+	 */
+	public function min(callable $compare_function = null) {
+		return $this->reduce(null, function ($acc, $value) use ($compare_function) {
+			if (is_null($acc)) {
+				return $value;
+			}
+			$to_apply_function = $compare_function ?? function ($a, $b) {
+				return $b <=> $a;
+			};
+
+			$result = $to_apply_function($acc, $value);
+			if ($result < 0) {
+				return $value;
+			}
+
+			return $acc;
+		});
+	}
+
+	/**
 	 * Using the given accumulator, it calls the callback passing the accumulator and the value of the
 	 * current element of the stream. The return of the callback is then saved into the accumulator and
 	 * passed to the next element. Returns the accumulator when all elements have been consumed.

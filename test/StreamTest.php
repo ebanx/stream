@@ -7,6 +7,13 @@ use PHPUnit\Framework\TestCase;
 
 class StreamTest extends TestCase {
 
+	public function testMin(): void {
+		$this->assertEquals(0, Stream::of([0])->min());
+		$this->assertEquals(2, Stream::of([3, 2, 2])->min());
+		$this->assertEquals(3, Stream::of([3, 2, 2])->min(function ($a, $b) { return $a <=> $b;})); // min acting like max 🤷
+		$this->assertEquals(['a' => 1], Stream::of([['a' => 2], ['a' => 1]])->min(function ($a, $b) { return $b['a'] <=> $a['a'];}));
+	}
+
 	public function testChainMethods(): void {
 		$result = Stream::rangeInt(1, 100)
 			->take(20)
