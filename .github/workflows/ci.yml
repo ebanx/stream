@@ -8,10 +8,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '7.1'
       - name: Cache composer dependencies
         uses: actions/cache@v2
         with:
@@ -19,6 +15,8 @@ jobs:
           key: composer-${{ hashFiles('composer.lock') }}
       - uses: php-actions/composer@v1
       - name: PHPUnit Tests
-        uses: php-actions/phpunit@v1
+        uses: php-actions/phpunit@v2
         with:
           configuration: test/phpunit.xml
+          php_version: 7.1
+          version: 7.5
