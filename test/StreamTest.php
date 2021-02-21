@@ -14,6 +14,13 @@ class StreamTest extends TestCase {
 		$this->assertEquals(['a' => 1], Stream::of([['a' => 2], ['a' => 1]])->min(function ($a, $b) { return $b['a'] <=> $a['a'];}));
 	}
 
+	public function testMax(): void {
+		$this->assertEquals(0, Stream::of([0])->max());
+		$this->assertEquals(3, Stream::of([3, 2, 2])->max());
+		$this->assertEquals(2, Stream::of([3, 2, 2])->max(function ($a, $b) { return $b <=> $a;})); // max acting like min 🤷
+		$this->assertEquals(['a' => 2], Stream::of([['a' => 2], ['a' => 1]])->max(function ($a, $b) { return $a['a'] <=> $b['a'];}));
+	}
+
 	public function testChainMethods(): void {
 		$result = Stream::rangeInt(1, 100)
 			->take(20)

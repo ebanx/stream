@@ -292,7 +292,7 @@ class Stream implements \Iterator {
 	}
 
 	/**
-	 * Get the min value of the stream. If two elements have the same value, the first one found is returned.
+	 * Get the min value from the stream. If two elements have the same value, the first one found is returned.
 	 * This method consumes the stream.
 	 *
 	 * @param callable|null $compare_function By default, a comparison using PHP's <=> (spaceship) operator is performed.
@@ -314,6 +314,20 @@ class Stream implements \Iterator {
 			}
 
 			return $acc;
+		});
+	}
+
+	/**
+	 * Get the max value from the stream. If two elements have the same value, the first one found is returned.
+	 * This method consumes the stream.
+	 *
+	 * @param callable|null $compare_function By default, a comparison using PHP's <=> (spaceship) operator is performed.
+	 *  You may provide a $compare_function returning -1, 0, or 1 for two given elements to change this behaviour.
+	 * @return mixed
+	 */
+	public function max(callable $compare_function = null) {
+		return $this->min($compare_function ?? static function ($a, $b) {
+			return $a <=> $b;
 		});
 	}
 
