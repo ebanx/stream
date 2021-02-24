@@ -84,6 +84,21 @@ class Stream implements \Iterator, \Countable {
 	}
 
 	/**
+	 * Collects all stream elements into an associative array.
+	 * Each element needs to be an array tuple where the first element will be the key
+	 * and the second one will be the value.
+	 *
+	 * @return array
+	 */
+	public function collectAsKeyValue(): array {
+		$result = [];
+		foreach ($this as [$key, $value]) {
+			$result[$key] = $value;
+		}
+		return $result;
+	}
+
+	/**
 	 * @return mixed
 	 */
 	public function collectFirst() {
@@ -455,6 +470,55 @@ class Stream implements \Iterator, \Countable {
 			$callback($data);
 			return $data;
 		});
+	}
+
+	/**
+	 * Applies the callback to each element of the stream and return a stream with
+	 * array pairs where the first element is the return of the callback and the second one
+	 * is a Stream with all values for which the callback returned that value.
+	 * The return of the callback can be a scalar or an object. If an object is returned
+	 * we use its identity to group.
+	 *
+	 * Caution, even though this method returns a Stream, it does consumes the original
+	 * Stream.
+	 *
+	 * @param callable $callback
+	 * @return Stream
+	 */
+	public function groupBy(callable $callback): Stream {
+		$values = [];
+		$keys = [];
+		foreach ($this as $value) {
+			$key = $callback($value);
+			$hashed_keys = is_object($key) ? spl_object_hash($key) : $key;
+			$values[$hashed_keys][] = $value;
+			$keys[$hashed_keys] = $key;
+		}
+
+		$generator = function (array $values, array $keys) {
+			foreach ($keys as $hashed_keys => $key) {
+				yield [$key, Stream::of($values[$hashed_keys])];
+			}
+		};
+
+		return new Stream($generator($values, $keys));
+	}
+
+	/**
+	 * Transform each stream element int a tuple (array of 2 elements) where
+	 * the first element is the result of the callback applied to the element value
+	 * and the second is the element value.
+	 *
+	 * @param callable $callback
+	 * @return Stream
+	 */
+	public function keyBy(callable $callback): Stream {
+		$generator = function (Stream $stream) use ($callback) {
+			foreach ($stream as $value) {
+				yield [$callback($value), $value];
+			}
+		};
+		return new Stream($generator($this));
 	}
 
 	private static function range($start, $end, $step): self {
