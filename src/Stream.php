@@ -48,6 +48,23 @@ class Stream implements \Iterator, \Countable {
 		return new self($generator());
 	}
 
+
+	/**
+	 * Create a new stream from the given iterable (any primitive array or \Traversable).
+	 * as [key, value] format
+	 *
+	 * @param iterable $iterable
+	 * @return static
+	 */
+	public static function ofKeyValueMap(iterable $iterable): self {
+		$generator = function () use ($iterable) {
+			foreach ($iterable as $key => $item) {
+				yield [$key, $item];
+			}
+		};
+		return new self($generator());
+	}
+
 	/**
 	 * Creates a stream with int numbers from start to end by increments of a step.
 	 * The range is inclusively.
