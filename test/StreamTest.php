@@ -432,6 +432,66 @@ OUTPUT;
 		], $result);
 	}
 
+	public function testCollectFirst_WithMatchingCallback(): void {
+		$elements = [
+			['description' => 'False, should not return 1', 'condition' => false],
+			['description' => 'False, should not return 2', 'condition' => false],
+			$expected_element = ['description' => 'True, should return', 'condition' => true],
+			['description' => 'True, after first is met, should not return', 'condition' => true],
+		];
+
+		$collected_first = Stream::of($elements)
+			->collectFirst(function ($element) {
+				return $element['condition'];
+			});
+
+		self::assertEquals($expected_element, $collected_first);
+	}
+
+	public function testCollectFirst_WithNoMatchingCallback_WithDefaultReturn(): void {
+		$elements = [
+			['description' => 'A', 'condition' => false],
+			['description' => 'B', 'condition' => false],
+			['description' => 'C', 'condition' => false],
+			['description' => 'D', 'condition' => false],
+		];
+
+		$collected_first = Stream::of($elements)
+			->collectFirst(function ($element) {
+				return $element['condition'];
+			}, $default = 'Nothing found.');
+
+		self::assertEquals('Nothing found.', $collected_first);
+	}
+
+	public function testCollectFirst_WithNoMatchingCallback_WithoutDefaultReturn(): void {
+		$elements = [
+			['description' => 'A', 'condition' => false],
+			['description' => 'B', 'condition' => false],
+		];
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('No element matching the criteria was found.');
+		Stream::of($elements)
+			->collectFirst(function ($element) {
+				return $element['condition'];
+			});
+	}
+
+	public function testCollectFirst_WithNoMatchingCallback_WithEmptyStringReturn(): void {
+		$elements = [
+			['description' => 'A', 'condition' => false],
+			['description' => 'B', 'condition' => false],
+		];
+
+		$collected_first = Stream::of($elements)
+			->collectFirst(function ($element) {
+				return $element['condition'];
+			}, $default = '');
+
+		self::assertEquals($default, $collected_first);
+	}
+
 	private function assertStreamIsNotConsumableAnymore(Stream $remaining_stream): void {
 		$this->expectException(\Exception::class);
 		$this->expectExceptionMessage('Cannot rewind a generator that was already run');

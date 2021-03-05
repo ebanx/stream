@@ -116,9 +116,27 @@ class Stream implements \Iterator, \Countable {
 	}
 
 	/**
+	 * If no callback is provided, return the first Stream's element.
+	 * If a callback is provided, return the first element whose callback returns true. A default
+	 * return can also be provided if nothing is found. Otherwise, an exception is thrown.
+	 *
+	 * @param callable $callback
+	 * @param mixed $default
 	 * @return mixed
 	 */
-	public function collectFirst() {
+	public function collectFirst(callable $callback = null, $default = null) {
+		if($callback) {
+			foreach ($this as $value) {
+				if($callback($value)) {
+					return $value;
+				}
+			}
+			if (is_null($default)) {
+				throw new \InvalidArgumentException('No element matching the criteria was found.');
+			}
+			return $default;
+		}
+
 		$collected = $this->take(1)->collect();
 		if (empty($collected)) {
 			throw new \InvalidArgumentException('No elements available in this stream.');
