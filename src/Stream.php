@@ -145,6 +145,36 @@ class Stream implements \Iterator, \Countable {
 	}
 
 	/**
+	 * If no callback is provided, return the last Stream's element.
+	 * If a callback is provided, return the last element whose callback returns true. A default
+	 * return can also be provided if nothing is found. Otherwise, an exception is thrown.
+	 *
+	 * @param callable $callback
+	 * @param mixed $default
+	 * @return mixed
+	 */
+	public function collectLast(callable $callback = null, $default = null) {
+		if(!$callback) {
+			$callback = function($_) {
+				return true;
+			};
+		}
+
+		foreach ($this as $value) {
+			if($callback($value)) {
+				$element_found = $value;
+			}
+		}
+		if (isset($element_found)) {
+			return $element_found;
+		}
+		if (is_null($default)) {
+			throw new \InvalidArgumentException('No element was found.');
+		}
+		return $default;
+	}
+
+	/**
 	 * Transform the stream by applying the callback to each element of the stream.
 	 *
 	 * @param callable $callback
