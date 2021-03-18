@@ -36,8 +36,9 @@ class StreamTest extends TestCase {
 				return $value % 2 !== 0;
 			})
 			->map(function (int $value) {
-				return $value + 2;
+				return [ 'result' => $value + 2];
 			})
+			->pluck('result')
 			->chunkEvery(5)
 			->collect();
 		$this->assertEquals([
@@ -551,6 +552,52 @@ OUTPUT;
 			->collectLast(function ($element) {
 				return $element['condition'];
 			});
+	}
+
+	public function testPluck_WithAssociativeArray(): void {
+		$elements = [
+			['description' => 'A'],
+			['description' => 'B'],
+		];
+
+		$result = Stream::of($elements)
+			->pluck('description')
+			->collect();
+		self::assertEquals(['A','B'], $result);
+	}
+
+	public function testPluck_WithObject(): void {
+		$elements = [
+			(object)['description' => 'A'],
+			(object)['description' => 'B'],
+		];
+
+		$result = Stream::of($elements)
+			->pluck('description')
+			->collect();
+		self::assertEquals(['A','B'], $result);
+	}
+
+	public function testPluck_WithIntKey(): void {
+		$elements = [
+			['A'],
+			['B'],
+		];
+		$result = Stream::of($elements)
+			->pluck(0)
+			->collect();
+		self::assertEquals(['A','B'], $result);
+	}
+
+	public function testPluck_WithInvalidKey(): void {
+		$elements = [
+			(object)['description' => 'A'],
+			(object)['description' => 'B'],
+		];
+		$result = Stream::of($elements)
+			->pluck(0)
+			->collect();
+		self::assertEquals([], $result);
 	}
 
 	private function assertStreamIsNotConsumableAnymore(Stream $remaining_stream): void {

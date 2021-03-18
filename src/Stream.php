@@ -586,6 +586,24 @@ class Stream implements \Iterator, \Countable {
 		return new Stream($generator($this));
 	}
 
+	/**
+	 * Transform the stream by returning the values from a single column in it
+	 *
+	 * @param string|int $column_key
+	 * @return Stream
+	 */
+	public function pluck($column_key): Stream {
+		$generator = static function (Stream $stream) use ($column_key) {
+			foreach ($stream as $row) {
+				$value = is_object($row) ? $row->{$column_key} : $row[$column_key];
+				if (isset($value)) {
+					yield $value;
+				}
+			}
+		};
+		return new Stream($generator($this));
+	}
+
 	private static function range($start, $end, $step): self {
 		$generatorAscending = function () use ($start, $end, $step) {
 			for ($i = $start; $i <= $end; $i += $step) {
