@@ -7,6 +7,14 @@ use PHPUnit\Framework\TestCase;
 
 class StreamTest extends TestCase {
 
+	public function testStreamIsCountable(): void {
+		$this->assertCount(0, Stream::of([]));
+		$this->assertCount(1, Stream::of(['a']));
+		$this->assertCount(3, Stream::of(['a', 'b', 'c']));
+		$this->assertCount(2, Stream::of(['a', 'b', 'c'])->skip(1));
+		$this->assertCount(2, Stream::of(['a', 'b', 'c'])->take(2));
+	}
+
 	public function testMin(): void {
 		$this->assertEquals(0, Stream::of([0])->min());
 		$this->assertEquals(2, Stream::of([3, 2, 2])->min());

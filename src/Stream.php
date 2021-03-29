@@ -2,7 +2,7 @@
 
 namespace EBANX\Stream;
 
-class Stream implements \Iterator {
+class Stream implements \Iterator, \Countable {
 
 	/** @var \Iterator */
 	private $source_iterator;
@@ -346,6 +346,18 @@ class Stream implements \Iterator {
 			$accumulator = $callback($accumulator, $value);
 		}
 		return $accumulator;
+	}
+
+	/**
+	 * Count the remaining items on the stream.
+	 * This method consumes the stream.
+	 *
+	 * @return int The count of remaining items.
+	 */
+	public function count(): int {
+		return $this->reduce(0, function ($count, $_) {
+			return $count + 1;
+		});
 	}
 
 	/**
