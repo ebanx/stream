@@ -344,6 +344,94 @@ OUTPUT;
 		self::assertEquals('1, 2, 3, 4, 5, ', $output);
 	}
 
+	public function testGroupBy(): void {
+		$stream = [
+			['group' => 'payment', 'value' => 1],
+			['group' => 'payment', 'value' => 2],
+			['group' => 'remittance', 'value' => 1]
+		];
+
+		$result = Stream::of($stream)
+			->groupBy(function (array $list) {
+				return $list['group'];
+			})
+			->map(function (array $grouped) {
+				[$key, $group] = $grouped;
+				return [$key, $group->collect()];
+			})
+			->collectAsKeyValue();
+
+		self::assertEquals([
+			'payment' => [
+				['group' => 'payment', 'value' => 1],
+				['group' => 'payment', 'value' => 2]
+			],
+			'remittance' => [
+				['group' => 'remittance', 'value' => 1]
+			]
+		], $result);
+	}
+
+	public function testGroupByWithObjects_ShouldWork(): void {
+		$object = (object)['value' => 2];
+		$values = [
+			['key' => 'first'],
+			['key' => (object)['value' => 1]],
+			['key' => (object)['value' => 1]],
+			['key' => $object],
+			['key' => $object],
+		];
+
+		$result = Stream::of($values)
+			->groupBy(function (array $list) {
+				return $list['key'];
+			})
+			->map(function (array $grouped) {
+				[$key, $group] = $grouped;
+				return [$key, $group->collect()];
+			})
+			->collect();
+		self::assertEquals(
+			[
+				['first', [['key' => 'first']]],
+				[(object)['value' => 1], [['key' => (object)['value' => 1]]]],
+				[(object)['value' => 1], [['key' => (object)['value' => 1]]]],
+				[$object, [['key' => $object], ['key' => $object]]]
+			], $result
+		);
+	}
+
+	public function testCollectAsKeyValue(): void {
+		$result = Stream::rangeInt(1, 5)
+			->map(function (int $n) {
+				return [$n, $n ** 2];
+			})
+			->collectAsKeyValue();
+
+		self::assertEquals([
+			1 => 1,
+			2 => 4,
+			3 => 9,
+			4 => 16,
+			5 => 25
+		], $result);
+	}
+
+	public function testKeyBy(): void {
+		$result = Stream::rangeInt(1, 5)
+			->keyBy(function (int $i) {
+				return $i + 10;
+			})
+			->collectAsKeyValue();
+		self::assertEquals([
+			11 => 1,
+			12 => 2,
+			13 => 3,
+			14 => 4,
+			15 => 5,
+		], $result);
+	}
+
 	private function assertStreamIsNotConsumableAnymore(Stream $remaining_stream): void {
 		$this->expectException(\Exception::class);
 		$this->expectExceptionMessage('Cannot rewind a generator that was already run');
