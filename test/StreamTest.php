@@ -344,6 +344,277 @@ OUTPUT;
 		self::assertEquals('1, 2, 3, 4, 5, ', $output);
 	}
 
+	public function testGroupBy(): void {
+		$stream = [
+			['group' => 'payment', 'value' => 1],
+			['group' => 'payment', 'value' => 2],
+			['group' => 'remittance', 'value' => 1]
+		];
+
+		$result = Stream::of($stream)
+			->groupBy(function (array $list) {
+				return $list['group'];
+			})
+			->map(function (array $grouped) {
+				[$key, $group] = $grouped;
+				return [$key, $group->collect()];
+			})
+			->collectAsKeyValue();
+
+		self::assertEquals([
+			'payment' => [
+				['group' => 'payment', 'value' => 1],
+				['group' => 'payment', 'value' => 2]
+			],
+			'remittance' => [
+				['group' => 'remittance', 'value' => 1]
+			]
+		], $result);
+	}
+
+	public function testGroupByWithObjects_ShouldWork(): void {
+		$object = (object)['value' => 2];
+		$values = [
+			['key' => 'first'],
+			['key' => (object)['value' => 1]],
+			['key' => (object)['value' => 1]],
+			['key' => $object],
+			['key' => $object],
+		];
+
+		$result = Stream::of($values)
+			->groupBy(function (array $list) {
+				return $list['key'];
+			})
+			->map(function (array $grouped) {
+				[$key, $group] = $grouped;
+				return [$key, $group->collect()];
+			})
+			->collect();
+		self::assertEquals(
+			[
+				['first', [['key' => 'first']]],
+				[(object)['value' => 1], [['key' => (object)['value' => 1]]]],
+				[(object)['value' => 1], [['key' => (object)['value' => 1]]]],
+				[$object, [['key' => $object], ['key' => $object]]]
+			], $result
+		);
+	}
+
+	public function testCollectAsKeyValue(): void {
+		$result = Stream::rangeInt(1, 5)
+			->map(function (int $n) {
+				return [$n, $n ** 2];
+			})
+			->collectAsKeyValue();
+
+		self::assertEquals([
+			1 => 1,
+			2 => 4,
+			3 => 9,
+			4 => 16,
+			5 => 25
+		], $result);
+	}
+
+	public function testKeyBy(): void {
+		$result = Stream::rangeInt(1, 5)
+			->keyBy(function (int $i) {
+				return $i + 10;
+			})
+			->collectAsKeyValue();
+		self::assertEquals([
+			11 => 1,
+			12 => 2,
+			13 => 3,
+			14 => 4,
+			15 => 5,
+		], $result);
+	}
+
+	public function testCollectFirst_WithMatchingCallback(): void {
+		$elements = [
+			['description' => 'False, should not return 1', 'condition' => false],
+			['description' => 'False, should not return 2', 'condition' => false],
+			$expected_element = ['description' => 'True, should return', 'condition' => true],
+			['description' => 'True, after first is met, should not return', 'condition' => true],
+		];
+
+		$collected_first = Stream::of($elements)
+			->collectFirst(function ($element) {
+				return $element['condition'];
+			});
+
+		self::assertEquals($expected_element, $collected_first);
+	}
+
+	public function testCollectFirst_WithNoMatchingCallback_WithDefaultReturn(): void {
+		$elements = [
+			['description' => 'A', 'condition' => false],
+			['description' => 'B', 'condition' => false],
+			['description' => 'C', 'condition' => false],
+			['description' => 'D', 'condition' => false],
+		];
+
+		$collected_first = Stream::of($elements)
+			->collectFirst(function ($element) {
+				return $element['condition'];
+			}, $default = 'Nothing found.');
+
+		self::assertEquals('Nothing found.', $collected_first);
+	}
+
+	public function testCollectFirst_WithNoMatchingCallback_WithoutDefaultReturn(): void {
+		$elements = [
+			['description' => 'A', 'condition' => false],
+			['description' => 'B', 'condition' => false],
+		];
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('No element matching the criteria was found.');
+		Stream::of($elements)
+			->collectFirst(function ($element) {
+				return $element['condition'];
+			});
+	}
+
+	public function testCollectFirst_WithNoMatchingCallback_WithEmptyStringReturn(): void {
+		$elements = [
+			['description' => 'A', 'condition' => false],
+			['description' => 'B', 'condition' => false],
+		];
+
+		$collected_first = Stream::of($elements)
+			->collectFirst(function ($element) {
+				return $element['condition'];
+			}, $default = '');
+
+		self::assertEquals($default, $collected_first);
+	}
+
+	public function testCollectLast_WithoutCallback_ShouldReturnLastElement(): void {
+		$elements = [
+			['description' => 'A'],
+			['description' => 'B'],
+			['description' => 'C'],
+			$expected_element = ['description' => 'D'],
+		];
+
+		$collected_last = Stream::of($elements)
+			->collectLast();
+
+		self::assertEquals($expected_element, $collected_last);
+	}
+
+	public function testCollectLast_WithMatchingCallback(): void {
+		$elements = [
+			['description' => 'False, should not return 1', 'condition' => false],
+			['description' => 'False, should not return 2', 'condition' => false],
+			['description' => 'True, should not return, not last', 'condition' => true],
+			$expected_element = ['description' => 'True, should return', 'condition' => true],
+			['description' => 'False, should not return 3', 'condition' => false],
+		];
+
+		$collected_last = Stream::of($elements)
+			->collectLast(function ($element) {
+				return $element['condition'];
+			});
+
+		self::assertEquals($expected_element, $collected_last);
+	}
+
+	public function testCollectLast_WithNoMatchingCallback_WithDefaultReturn(): void {
+		$elements = [
+			['description' => 'A', 'condition' => false],
+			['description' => 'B', 'condition' => false],
+			['description' => 'C', 'condition' => false],
+			['description' => 'D', 'condition' => false],
+		];
+
+		$collected_last = Stream::of($elements)
+			->collectLast(function ($element) {
+				return $element['condition'];
+			}, $default = 'Nothing found.');
+
+		self::assertEquals('Nothing found.', $collected_last);
+	}
+
+	public function testCollectLast_WithNoMatchingCallback_WithoutDefaultReturn(): void {
+		$elements = [
+			['description' => 'A', 'condition' => false],
+			['description' => 'B', 'condition' => false],
+		];
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('No element was found.');
+		Stream::of($elements)
+			->collectLast(function ($element) {
+				return $element['condition'];
+			});
+	}
+
+	public function testPluck_WithAssociativeArray(): void {
+		$elements = [
+			['description' => 'A'],
+			['description' => 'B'],
+		];
+
+		$result = Stream::of($elements)
+			->pluck('description')
+			->collect();
+		self::assertEquals(['A','B'], $result);
+	}
+
+	public function testPluck_WithObject(): void {
+		$elements = [
+			(object)['description' => 'A'],
+			(object)['description' => 'B'],
+		];
+
+		$result = Stream::of($elements)
+			->pluck('description')
+			->collect();
+		self::assertEquals(['A','B'], $result);
+	}
+
+	public function testPluck_WithIntKey(): void {
+		$elements = [
+			['A'],
+			['B'],
+		];
+		$result = Stream::of($elements)
+			->pluck(0)
+			->collect();
+		self::assertEquals(['A','B'], $result);
+	}
+
+	public function testPluck_WithInvalidKey(): void {
+		$elements = [
+			(object)['description' => 'A'],
+			(object)['description' => 'B'],
+		];
+		$result = Stream::of($elements)
+			->pluck(0)
+			->collect();
+		self::assertEquals([], $result);
+	}
+
+	public function testFlatten(): void {
+		$elements = [
+			[1, 2],
+			Stream::of([3, 4, 5]),
+			(object) ['a' => 6, 'b' => 7],
+			[[8, 9]]
+		];
+		$result = Stream::of($elements)
+			->flatten()
+			->collect();
+		self::assertEquals(
+			[1, 2, 3, 4, 5, 6, 7, [8, 9]],
+			$result
+		);
+	}
+
 	private function assertStreamIsNotConsumableAnymore(Stream $remaining_stream): void {
 		$this->expectException(\Exception::class);
 		$this->expectExceptionMessage('Cannot rewind a generator that was already run');

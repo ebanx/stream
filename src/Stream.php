@@ -116,8 +116,17 @@ class Stream implements \Iterator, \Countable {
 	 * @return $this
 	 */
 	public function flatMap(callable $callback): self {
-		$generator = function (Stream $stream) use ($callback) {
-			foreach ($stream->map($callback) as $traversable) {
+		return $this->map($callback)->flatten();
+	}
+
+	/**
+	 * Flattens the stream result. All elements of the stream must be traversable.
+	 *
+	 * @return $this
+	 */
+	public function flatten(): self {
+		$generator = function (Stream $stream) {
+			foreach ($stream as $traversable) {
 				foreach ($traversable as $value) {
 					yield $value;
 				}
