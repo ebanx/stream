@@ -616,6 +616,23 @@ OUTPUT;
 		);
 	}
 
+	public function testTakeWhile_ShouldReturnFirstMatchingElements_ShouldNotIterateOverWholeStream(): void {
+		$iterable = new \ArrayIterator([1.25, 2.75, 3, 1, 1, 5, 8]);
+		$total = 0;
+		$elements_checked = [];
+		$result = Stream::of($iterable)
+			->inspect(function($value) use (&$elements_checked) {
+				$elements_checked[] = $value;
+			})
+			->takeWhile(function($value) use (&$total) {
+				$total = $total + $value;
+				return $total <= 8;
+			})->collect();
+
+		self::assertEquals([1.25, 2.75, 3, 1], $result);
+		self::assertEquals([1.25, 2.75, 3, 1, 1], $elements_checked);
+	}
+
 	private function assertStreamIsNotConsumableAnymore(Stream $remaining_stream): void {
 		$this->expectException(\Exception::class);
 		$this->expectExceptionMessage('Cannot rewind a generator that was already run');

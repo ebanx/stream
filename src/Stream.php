@@ -613,6 +613,26 @@ class Stream implements \Iterator, \Countable {
 		return new Stream($generator($this));
 	}
 
+	/**
+	 * Takes the elements from the stream until a false return, then nothing else will be taken
+	 *
+	 * @param callable $callback
+	 * @return $this
+	 */
+	public function takeWhile(callable $callback): Stream {
+		$generator = static function(Stream $stream) use ($callback) {
+			foreach ($stream as $value) {
+				if ($callback($value)) {
+					yield $value;
+					continue;
+				}
+				break;
+			}
+		};
+
+		return new self($generator($this));
+	}
+
 	private static function range($start, $end, $step): self {
 		$generatorAscending = function () use ($start, $end, $step) {
 			for ($i = $start; $i <= $end; $i += $step) {
