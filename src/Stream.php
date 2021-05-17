@@ -196,8 +196,17 @@ class Stream implements \Iterator, \Countable {
 	 * @return $this
 	 */
 	public function flatMap(callable $callback): self {
-		$generator = function (Stream $stream) use ($callback) {
-			foreach ($stream->map($callback) as $traversable) {
+		return $this->map($callback)->flatten();
+	}
+
+	/**
+	 * Flattens the stream result. All elements of the stream must be traversable.
+	 *
+	 * @return $this
+	 */
+	public function flatten(): self {
+		$generator = function (Stream $stream) {
+			foreach ($stream as $traversable) {
 				foreach ($traversable as $value) {
 					yield $value;
 				}
@@ -602,6 +611,26 @@ class Stream implements \Iterator, \Countable {
 			}
 		};
 		return new Stream($generator($this));
+	}
+
+	/**
+	 * Takes the elements from the stream until a false return, then nothing else will be taken
+	 *
+	 * @param callable $callback
+	 * @return $this
+	 */
+	public function takeWhile(callable $callback): Stream {
+		$generator = static function(Stream $stream) use ($callback) {
+			foreach ($stream as $value) {
+				if ($callback($value)) {
+					yield $value;
+					continue;
+				}
+				break;
+			}
+		};
+
+		return new self($generator($this));
 	}
 
 	private static function range($start, $end, $step): self {
