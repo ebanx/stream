@@ -36,8 +36,9 @@ class StreamTest extends TestCase {
 				return $value % 2 !== 0;
 			})
 			->map(function (int $value) {
-				return $value + 2;
+				return [ 'result' => $value + 2];
 			})
+			->pluck('result')
 			->chunkEvery(5)
 			->collect();
 		$this->assertEquals([

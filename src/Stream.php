@@ -48,6 +48,23 @@ class Stream implements \Iterator, \Countable {
 		return new self($generator());
 	}
 
+
+	/**
+	 * Create a new stream from the given iterable (any primitive array or \Traversable).
+	 * as [key, value] format
+	 *
+	 * @param iterable $iterable
+	 * @return static
+	 */
+	public static function ofKeyValueMap(iterable $iterable): self {
+		$generator = function () use ($iterable) {
+			foreach ($iterable as $key => $item) {
+				yield [$key, $item];
+			}
+		};
+		return new self($generator());
+	}
+
 	/**
 	 * Creates a stream with int numbers from start to end by increments of a step.
 	 * The range is inclusively.
@@ -84,14 +101,77 @@ class Stream implements \Iterator, \Countable {
 	}
 
 	/**
+	 * Collects all stream elements into an associative array.
+	 * Each element needs to be an array tuple where the first element will be the key
+	 * and the second one will be the value.
+	 *
+	 * @return array
+	 */
+	public function collectAsKeyValue(): array {
+		$result = [];
+		foreach ($this as [$key, $value]) {
+			$result[$key] = $value;
+		}
+		return $result;
+	}
+
+	/**
+	 * If no callback is provided, return the first Stream's element.
+	 * If a callback is provided, return the first element whose callback returns true. A default
+	 * return can also be provided if nothing is found. Otherwise, an exception is thrown.
+	 *
+	 * @param callable $callback
+	 * @param mixed $default
 	 * @return mixed
 	 */
-	public function collectFirst() {
+	public function collectFirst(callable $callback = null, $default = null) {
+		if($callback) {
+			foreach ($this as $value) {
+				if($callback($value)) {
+					return $value;
+				}
+			}
+			if (is_null($default)) {
+				throw new \InvalidArgumentException('No element matching the criteria was found.');
+			}
+			return $default;
+		}
+
 		$collected = $this->take(1)->collect();
 		if (empty($collected)) {
 			throw new \InvalidArgumentException('No elements available in this stream.');
 		}
 		return array_shift($collected);
+	}
+
+	/**
+	 * If no callback is provided, return the last Stream's element.
+	 * If a callback is provided, return the last element whose callback returns true. A default
+	 * return can also be provided if nothing is found. Otherwise, an exception is thrown.
+	 *
+	 * @param callable $callback
+	 * @param mixed $default
+	 * @return mixed
+	 */
+	public function collectLast(callable $callback = null, $default = null) {
+		if(!$callback) {
+			$callback = function($_) {
+				return true;
+			};
+		}
+
+		foreach ($this as $value) {
+			if($callback($value)) {
+				$element_found = $value;
+			}
+		}
+		if (isset($element_found)) {
+			return $element_found;
+		}
+		if (is_null($default)) {
+			throw new \InvalidArgumentException('No element was found.');
+		}
+		return $default;
 	}
 
 	/**
@@ -464,6 +544,73 @@ class Stream implements \Iterator, \Countable {
 			$callback($data);
 			return $data;
 		});
+	}
+
+	/**
+	 * Applies the callback to each element of the stream and return a stream with
+	 * array pairs where the first element is the return of the callback and the second one
+	 * is a Stream with all values for which the callback returned that value.
+	 * The return of the callback can be a scalar or an object. If an object is returned
+	 * we use its identity to group.
+	 *
+	 * Caution, even though this method returns a Stream, it does consumes the original
+	 * Stream.
+	 *
+	 * @param callable $callback
+	 * @return Stream
+	 */
+	public function groupBy(callable $callback): Stream {
+		$values = [];
+		$keys = [];
+		foreach ($this as $value) {
+			$key = $callback($value);
+			$hashed_keys = is_object($key) ? spl_object_hash($key) : $key;
+			$values[$hashed_keys][] = $value;
+			$keys[$hashed_keys] = $key;
+		}
+
+		$generator = function (array $values, array $keys) {
+			foreach ($keys as $hashed_keys => $key) {
+				yield [$key, Stream::of($values[$hashed_keys])];
+			}
+		};
+
+		return new Stream($generator($values, $keys));
+	}
+
+	/**
+	 * Transform each stream element int a tuple (array of 2 elements) where
+	 * the first element is the result of the callback applied to the element value
+	 * and the second is the element value.
+	 *
+	 * @param callable $callback
+	 * @return Stream
+	 */
+	public function keyBy(callable $callback): Stream {
+		$generator = function (Stream $stream) use ($callback) {
+			foreach ($stream as $value) {
+				yield [$callback($value), $value];
+			}
+		};
+		return new Stream($generator($this));
+	}
+
+	/**
+	 * Transform the stream by returning the values from a single column in it
+	 *
+	 * @param string|int $column_key
+	 * @return Stream
+	 */
+	public function pluck($column_key): Stream {
+		$generator = static function (Stream $stream) use ($column_key) {
+			foreach ($stream as $row) {
+				$value = is_object($row) ? $row->{$column_key} : $row[$column_key];
+				if (isset($value)) {
+					yield $value;
+				}
+			}
+		};
+		return new Stream($generator($this));
 	}
 
 	private static function range($start, $end, $step): self {
