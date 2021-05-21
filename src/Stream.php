@@ -259,7 +259,19 @@ class Stream implements \Iterator, \Countable {
 	 * @return $this
 	 */
 	public function take(int $n_elements): self {
-		return new self(new \LimitIterator($this, 0, $n_elements));
+		$generator = function (iterable $iterable, int $n_elements) {
+			if ($n_elements == 0) {
+				return;
+			}
+			$count = 0;
+			foreach ($iterable as $element) {
+				yield $element;
+				if (++$count == $n_elements){
+					break;
+				}
+			}
+		} ;
+		return new self($generator($this, $n_elements));
 	}
 
 	/**

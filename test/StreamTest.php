@@ -139,6 +139,23 @@ class StreamTest extends TestCase {
 		$this->assertEquals([1, 2, 3, 4, 5], $result);
 	}
 
+	public function testTakeZeroElement(): void {
+		$iterator_that_counts_calls = $this->createIteratorThatCountCalls(Stream::rangeInt(1, 15));
+		$this->assertEquals([], Stream::of($iterator_that_counts_calls)->take(0)->collect());
+		self::assertEquals(0, $iterator_that_counts_calls->rewind_calls);
+		self::assertEquals(0, $iterator_that_counts_calls->next_calls);
+		self::assertEquals(0, $iterator_that_counts_calls->current_calls);
+	}
+
+	public function testTake_ShouldOnlyConsumeTheExpectedAmountOfElements(): void {
+		$range = Stream::rangeInt(1, 10);
+		$iterator_that_counts_calls = $this->createIteratorThatCountCalls($range);
+		self::assertEquals([1, 2, 3, 4, 5], Stream::of($iterator_that_counts_calls)->take(5)->collect());
+		self::assertEquals(1, $iterator_that_counts_calls->rewind_calls);
+		self::assertEquals(4, $iterator_that_counts_calls->next_calls);
+		self::assertEquals(5, $iterator_that_counts_calls->current_calls);
+	}
+
 	public function testSkip(): void {
 		$result = Stream::rangeInt(1, 15)
 			->skip(10)
@@ -631,6 +648,42 @@ OUTPUT;
 
 		self::assertEquals([1.25, 2.75, 3, 1], $result);
 		self::assertEquals([1.25, 2.75, 3, 1, 1], $elements_checked);
+	}
+
+	private function createIteratorThatCountCalls(\Iterator $range) {
+		return new class($range) implements \Iterator {
+			public $rewind_calls = 0;
+			public $next_calls = 0;
+			public $current_calls = 0;
+			private $inner_iterator;
+
+			public function __construct(\Iterator $inner_iterator) {
+				$this->inner_iterator = $inner_iterator;
+			}
+
+			public function current() {
+				$this->current_calls++;
+				return $this->inner_iterator->current();
+			}
+
+			public function next() {
+				$this->next_calls++;
+				$this->inner_iterator->next();
+			}
+
+			public function key() {
+				return $this->inner_iterator->key();
+			}
+
+			public function valid() {
+				return $this->inner_iterator->valid();
+			}
+
+			public function rewind() {
+				$this->rewind_calls++;
+				$this->inner_iterator->rewind();
+			}
+		};
 	}
 
 	private function assertStreamIsNotConsumableAnymore(Stream $remaining_stream): void {
