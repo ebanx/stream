@@ -58,6 +58,11 @@ class StreamTest extends TestCase {
 		Stream::of([1, 2, 3])->skip(3)->collectFirst();
 	}
 
+	public function testCollectFirst_ShouldReturnDefault_WithoutCallbackWithDefault(): void {
+		$result = Stream::of([1, 2, 3])->skip(3)->collectFirst(null, $default = 0);
+		$this->assertEquals($default, $result);
+	}
+
 	public function testTakeShouldConsumeOnlyDesiredValues(): void {
 		$source = Stream::rangeInt(1, 4);
 

@@ -138,10 +138,10 @@ class Stream implements \Iterator, \Countable {
 		}
 
 		$collected = $this->take(1)->collect();
-		if (empty($collected)) {
+		if (empty($collected) && is_null($default)) {
 			throw new \InvalidArgumentException('No elements available in this stream.');
 		}
-		return array_shift($collected);
+		return array_shift($collected) ?? $default;
 	}
 
 	/**
