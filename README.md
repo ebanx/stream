@@ -25,4 +25,4 @@ $result = Stream::rangeInt(0, 10)
 
 ### Licensing
 
-We are distributing it using the permissive MIT license. Fell free to do whatever you want with it.
+We are distributing it using the permissive MIT license. Feel free to do whatever you want with it.
