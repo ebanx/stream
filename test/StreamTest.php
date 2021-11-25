@@ -655,6 +655,33 @@ OUTPUT;
 		self::assertEquals([1.25, 2.75, 3, 1, 1], $elements_checked);
 	}
 
+	public function testIntoGenerator(): void {
+		$stream = Stream::of([1, 2, 3, 4, 5]);
+		$generator = $stream->intoGenerator();
+		self::assertInstanceOf(\Generator::class, $generator);
+		self::assertEquals([1, 2, 3, 4, 5], iterator_to_array($generator));
+	}
+
+	public function testReject(): void {
+		$result = Stream::rangeInt(1, 10)
+			->reject(function (int $value): bool {
+				return $value % 2 === 0;
+			})
+			->collect();
+
+		$this->assertEquals([1, 3, 5, 7, 9], $result);
+	}
+
+	private function assertStreamIsNotConsumableAnymore(Stream $remaining_stream): void {
+		$this->expectException(\Exception::class);
+		$this->expectExceptionMessage('Cannot rewind a generator that was already run');
+		$remaining_stream->collect();
+	}
+
+	private function assertSourceIteratorWasNotFullyConsumed(Stream $source): void {
+		$this->assertTrue($source->valid(), 'Source iterator was fully consumed, although there is no need for it');
+	}
+
 	private function createIteratorThatCountCalls(\Iterator $range) {
 		return new class($range) implements \Iterator {
 			public $rewind_calls = 0;

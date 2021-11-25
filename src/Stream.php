@@ -645,6 +645,35 @@ class Stream implements \Iterator, \Countable {
 		return new self($generator($this));
 	}
 
+	/**
+	 * Converts the stream into a php Generator
+	 *
+	 * @return \Generator
+	 */
+	public function intoGenerator(): \Generator {
+		foreach ($this as $value) {
+			yield $value;
+		}
+	}
+
+	/**
+	 * Rejects the stream's elements that meet the callback's condition.
+	 *
+	 * @param callable $callback
+	 * @return $this
+	 */
+	public function reject(callable $callback): self {
+		$generator = function (Stream $stream) use ($callback): \Generator {
+			foreach ($stream as $value) {
+				if (!$callback($value)) {
+					yield $value;
+				}
+			}
+		};
+
+		return new self($generator($this));
+	}
+
 	private static function range($start, $end, $step): self {
 		$generatorAscending = function () use ($start, $end, $step) {
 			for ($i = $start; $i <= $end; $i += $step) {
