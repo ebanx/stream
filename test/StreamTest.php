@@ -672,6 +672,65 @@ OUTPUT;
 		$this->assertEquals([1, 3, 5, 7, 9], $result);
 	}
 
+	public function testAll_GivenAllMatchedElements_ShouldReturnTrue(): void {
+		$stream = Stream::of([0, 2, 4, 6, 8]);
+		$result = $stream
+			->all(function (int $value): bool {
+				return $value % 2 === 0;
+			});
+
+		$this->assertTrue($result);
+	}
+
+	public function testAll_GivenOneMismatchedElement_ShouldReturnFalse(): void {
+		$result = Stream::rangeInt(1, 10)
+			->all(function (int $value): bool {
+				return $value < 10;
+			});
+
+		$this->assertFalse($result);
+	}
+
+	public function testNone_GivenAllMismatchedElements_ShouldReturnTrue(): void {
+		$stream = Stream::of([0, 2, 4, 6, 8]);
+		$result = $stream
+			->none(function (int $value): bool {
+				return $value % 2 === 1;
+			});
+
+		$this->assertTrue($result);
+	}
+
+	public function testNone_GivenOneMismatchedElement_ShouldReturnFalse(): void {
+		$stream = Stream::of([0, 2, 4, 6, 8, 9]);
+		$result = $stream
+			->none(function (int $value): bool {
+				return $value % 2 === 0;
+			});
+
+		$this->assertFalse($result);
+	}
+
+	public function testAny_GiveAtLeastOneElementMatching_ShouldReturnTrue(): void {
+		$stream = Stream::of([0, 2, 4, 6, 8, 9]);
+		$result = $stream
+			->any(function (int $value): bool {
+				return $value % 2 === 1;
+			});
+
+		$this->assertTrue($result);
+	}
+
+	public function testAny_GiveThatNoElementMatches_ShouldReturnFalse(): void {
+		$stream = Stream::of([0, 2, 4, 6, 8, 9]);
+		$result = $stream
+			->any(function (int $value): bool {
+				return $value > 9;
+			});
+
+		$this->assertFalse($result);
+	}
+
 	private function assertStreamIsNotConsumableAnymore(Stream $remaining_stream): void {
 		$this->expectException(\Exception::class);
 		$this->expectExceptionMessage('Cannot rewind a generator that was already run');

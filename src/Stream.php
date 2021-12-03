@@ -674,6 +674,54 @@ class Stream implements \Iterator, \Countable {
 		return new self($generator($this));
 	}
 
+	/**
+	 * Returns true if all stream's elements meet the callback's condition. Returns false otherwise.
+	 *
+	 * @param callable $callback
+	 * @return bool
+	 */
+	public function all(callable $callback): bool {
+		foreach ($this as $value) {
+			if (!$callback($value)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Returns true if none of the stream's elements meet the callback's condition. Returns false otherwise.
+	 *
+	 * @param callable $callback
+	 * @return bool
+	 */
+	public function none(callable $callback): bool {
+		foreach ($this as $value) {
+			if ($callback($value)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Returns true if at least one element from the stream meets the callback's condition. Returns false otherwise.
+	 *
+	 * @param callable $callback
+	 * @return bool
+	 */
+	public function any(callable $callback): bool {
+		foreach ($this as $value) {
+			if ($callback($value)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	private static function range($start, $end, $step): self {
 		$generatorAscending = function () use ($start, $end, $step) {
 			for ($i = $start; $i <= $end; $i += $step) {
