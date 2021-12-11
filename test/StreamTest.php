@@ -22,6 +22,42 @@ class StreamTest extends TestCase {
 		$this->assertEquals(['a' => 1], Stream::of([['a' => 2], ['a' => 1]])->min(function ($a, $b) { return $b['a'] <=> $a['a'];}));
 	}
 
+	public static function minByTestCases(): \Generator {
+		$key_function = function ($data) {
+			return $data['key'];
+		};
+
+		yield 'Not itens, returns null' =>
+			[null, [], $key_function];
+		yield 'Single item' =>
+			[['key' => 0, 'val' => 999], [['key' => 0, 'val' => 999]], $key_function];
+		yield 'Multiple items returns first' =>
+			[['key' => 2, 'val' => 2], [['key'=> 3, 'val' => 0], ['key' => 2, 'val' => 2], ['key' => 2, 'val' => 1]], $key_function];
+	}
+
+	/** @dataProvider minByTestCases */
+	public function testMinBy(?array $expected_min, array $data, callable $key_function): void {
+		$this->assertEquals($expected_min, Stream::of($data)->minBy($key_function));
+	}
+
+	public static function maxByTestCases(): \Generator {
+		$key_function = function ($data) {
+			return $data['key'];
+		};
+
+		yield 'Not itens, returns null' =>
+			[null, [], $key_function];
+		yield 'Single item' =>
+			[['key' => 0, 'val' => 999], [['key' => 0, 'val' => 999]], $key_function];
+		yield 'Multiple items returns first' =>
+			[['key' => 3, 'val' => 4], [['key'=> 3, 'val' => 4], ['key' => 3, 'val' => 2], ['key' => 2, 'val' => 1]], $key_function];
+	}
+
+	/** @dataProvider maxByTestCases */
+	public function testMaxBy(?array $expected_max, array $data, callable $key_function): void {
+		$this->assertEquals($expected_max, Stream::of($data)->maxBy($key_function));
+	}
+
 	public function testMax(): void {
 		$this->assertEquals(0, Stream::of([0])->max());
 		$this->assertEquals(3, Stream::of([3, 2, 2])->max());

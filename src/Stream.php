@@ -419,6 +419,20 @@ class Stream implements \Iterator, \Countable {
 	}
 
 	/**
+	 * Get the min value from the stream. If two elements have the same value, the first one found is returned.
+	 * This method consumes the stream.
+	 *
+	 * @param callable $key_function The key function to compare against. Data will be transformed by this function before compared.
+
+	 * @return mixed
+	 */
+	public function minBy(callable $key_function) {
+		return $this->min(static function ($a, $b) use ($key_function) {
+			return $key_function($b) <=> $key_function($a);
+		});
+	}
+
+	/**
 	 * Get the max value from the stream. If two elements have the same value, the first one found is returned.
 	 * This method consumes the stream.
 	 *
@@ -429,6 +443,20 @@ class Stream implements \Iterator, \Countable {
 	public function max(callable $compare_function = null) {
 		return $this->min($compare_function ?? static function ($a, $b) {
 			return $a <=> $b;
+		});
+	}
+
+	/**
+	 * Get the max value from the stream. If two elements have the same value, the first one found is returned.
+	 * This method consumes the stream.
+	 *
+	 * @param callable $key_function The key function to compare against. Data will be transformed by this function before compared.
+
+	 * @return mixed
+	 */
+	public function maxBy(callable $key_function) {
+		return $this->max(static function ($a, $b) use ($key_function) {
+			return $key_function($a) <=> $key_function($b);
 		});
 	}
 
