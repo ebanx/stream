@@ -138,10 +138,10 @@ class Stream implements \Iterator, \Countable {
 		}
 
 		$collected = $this->take(1)->collect();
-		if (empty($collected)) {
+		if (empty($collected) && is_null($default)) {
 			throw new \InvalidArgumentException('No elements available in this stream.');
 		}
-		return array_shift($collected);
+		return array_shift($collected) ?? $default;
 	}
 
 	/**
@@ -419,6 +419,20 @@ class Stream implements \Iterator, \Countable {
 	}
 
 	/**
+	 * Get the min value from the stream. If two elements have the same value, the first one found is returned.
+	 * This method consumes the stream.
+	 *
+	 * @param callable $key_function The key function to compare against. Data will be transformed by this function before compared.
+
+	 * @return mixed
+	 */
+	public function minBy(callable $key_function) {
+		return $this->min(static function ($a, $b) use ($key_function) {
+			return $key_function($b) <=> $key_function($a);
+		});
+	}
+
+	/**
 	 * Get the max value from the stream. If two elements have the same value, the first one found is returned.
 	 * This method consumes the stream.
 	 *
@@ -429,6 +443,20 @@ class Stream implements \Iterator, \Countable {
 	public function max(callable $compare_function = null) {
 		return $this->min($compare_function ?? static function ($a, $b) {
 			return $a <=> $b;
+		});
+	}
+
+	/**
+	 * Get the max value from the stream. If two elements have the same value, the first one found is returned.
+	 * This method consumes the stream.
+	 *
+	 * @param callable $key_function The key function to compare against. Data will be transformed by this function before compared.
+
+	 * @return mixed
+	 */
+	public function maxBy(callable $key_function) {
+		return $this->max(static function ($a, $b) use ($key_function) {
+			return $key_function($a) <=> $key_function($b);
 		});
 	}
 
@@ -643,6 +671,83 @@ class Stream implements \Iterator, \Countable {
 		};
 
 		return new self($generator($this));
+	}
+
+	/**
+	 * Converts the stream into a php Generator
+	 *
+	 * @return \Generator
+	 */
+	public function intoGenerator(): \Generator {
+		foreach ($this as $value) {
+			yield $value;
+		}
+	}
+
+	/**
+	 * Rejects the stream's elements that meet the callback's condition.
+	 *
+	 * @param callable $callback
+	 * @return $this
+	 */
+	public function reject(callable $callback): self {
+		$generator = function (Stream $stream) use ($callback): \Generator {
+			foreach ($stream as $value) {
+				if (!$callback($value)) {
+					yield $value;
+				}
+			}
+		};
+
+		return new self($generator($this));
+	}
+
+	/**
+	 * Returns true if all stream's elements meet the callback's condition. Returns false otherwise.
+	 *
+	 * @param callable $callback
+	 * @return bool
+	 */
+	public function all(callable $callback): bool {
+		foreach ($this as $value) {
+			if (!$callback($value)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Returns true if none of the stream's elements meet the callback's condition. Returns false otherwise.
+	 *
+	 * @param callable $callback
+	 * @return bool
+	 */
+	public function none(callable $callback): bool {
+		foreach ($this as $value) {
+			if ($callback($value)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Returns true if at least one element from the stream meets the callback's condition. Returns false otherwise.
+	 *
+	 * @param callable $callback
+	 * @return bool
+	 */
+	public function any(callable $callback): bool {
+		foreach ($this as $value) {
+			if ($callback($value)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private static function range($start, $end, $step): self {

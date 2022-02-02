@@ -22,6 +22,42 @@ class StreamTest extends TestCase {
 		$this->assertEquals(['a' => 1], Stream::of([['a' => 2], ['a' => 1]])->min(function ($a, $b) { return $b['a'] <=> $a['a'];}));
 	}
 
+	public static function minByTestCases(): \Generator {
+		$key_function = function ($data) {
+			return $data['key'];
+		};
+
+		yield 'Not itens, returns null' =>
+			[null, [], $key_function];
+		yield 'Single item' =>
+			[['key' => 0, 'val' => 999], [['key' => 0, 'val' => 999]], $key_function];
+		yield 'Multiple items returns first' =>
+			[['key' => 2, 'val' => 2], [['key'=> 3, 'val' => 0], ['key' => 2, 'val' => 2], ['key' => 2, 'val' => 1]], $key_function];
+	}
+
+	/** @dataProvider minByTestCases */
+	public function testMinBy(?array $expected_min, array $data, callable $key_function): void {
+		$this->assertEquals($expected_min, Stream::of($data)->minBy($key_function));
+	}
+
+	public static function maxByTestCases(): \Generator {
+		$key_function = function ($data) {
+			return $data['key'];
+		};
+
+		yield 'Not itens, returns null' =>
+			[null, [], $key_function];
+		yield 'Single item' =>
+			[['key' => 0, 'val' => 999], [['key' => 0, 'val' => 999]], $key_function];
+		yield 'Multiple items returns first' =>
+			[['key' => 3, 'val' => 4], [['key'=> 3, 'val' => 4], ['key' => 3, 'val' => 2], ['key' => 2, 'val' => 1]], $key_function];
+	}
+
+	/** @dataProvider maxByTestCases */
+	public function testMaxBy(?array $expected_max, array $data, callable $key_function): void {
+		$this->assertEquals($expected_max, Stream::of($data)->maxBy($key_function));
+	}
+
 	public function testMax(): void {
 		$this->assertEquals(0, Stream::of([0])->max());
 		$this->assertEquals(3, Stream::of([3, 2, 2])->max());
@@ -56,6 +92,11 @@ class StreamTest extends TestCase {
 		$this->expectException(\InvalidArgumentException::class);
 		$this->expectExceptionMessage('No elements available in this stream.');
 		Stream::of([1, 2, 3])->skip(3)->collectFirst();
+	}
+
+	public function testCollectFirst_ShouldReturnDefault_WithoutCallbackWithDefault(): void {
+		$result = Stream::of([1, 2, 3])->skip(3)->collectFirst(null, $default = 0);
+		$this->assertEquals($default, $result);
 	}
 
 	public function testTakeShouldConsumeOnlyDesiredValues(): void {
@@ -648,6 +689,82 @@ OUTPUT;
 
 		self::assertEquals([1.25, 2.75, 3, 1], $result);
 		self::assertEquals([1.25, 2.75, 3, 1, 1], $elements_checked);
+	}
+
+	public function testIntoGenerator(): void {
+		$stream = Stream::of([1, 2, 3, 4, 5]);
+		$generator = $stream->intoGenerator();
+		self::assertInstanceOf(\Generator::class, $generator);
+		self::assertEquals([1, 2, 3, 4, 5], iterator_to_array($generator));
+	}
+
+	public function testReject(): void {
+		$result = Stream::rangeInt(1, 10)
+			->reject(function (int $value): bool {
+				return $value % 2 === 0;
+			})
+			->collect();
+
+		$this->assertEquals([1, 3, 5, 7, 9], $result);
+	}
+
+	public function testAll_GivenAllMatchedElements_ShouldReturnTrue(): void {
+		$stream = Stream::of([0, 2, 4, 6, 8]);
+		$result = $stream
+			->all(function (int $value): bool {
+				return $value % 2 === 0;
+			});
+
+		$this->assertTrue($result);
+	}
+
+	public function testAll_GivenOneMismatchedElement_ShouldReturnFalse(): void {
+		$result = Stream::rangeInt(1, 10)
+			->all(function (int $value): bool {
+				return $value < 10;
+			});
+
+		$this->assertFalse($result);
+	}
+
+	public function testNone_GivenAllMismatchedElements_ShouldReturnTrue(): void {
+		$stream = Stream::of([0, 2, 4, 6, 8]);
+		$result = $stream
+			->none(function (int $value): bool {
+				return $value % 2 === 1;
+			});
+
+		$this->assertTrue($result);
+	}
+
+	public function testNone_GivenOneMismatchedElement_ShouldReturnFalse(): void {
+		$stream = Stream::of([0, 2, 4, 6, 8, 9]);
+		$result = $stream
+			->none(function (int $value): bool {
+				return $value % 2 === 0;
+			});
+
+		$this->assertFalse($result);
+	}
+
+	public function testAny_GiveAtLeastOneElementMatching_ShouldReturnTrue(): void {
+		$stream = Stream::of([0, 2, 4, 6, 8, 9]);
+		$result = $stream
+			->any(function (int $value): bool {
+				return $value % 2 === 1;
+			});
+
+		$this->assertTrue($result);
+	}
+
+	public function testAny_GiveThatNoElementMatches_ShouldReturnFalse(): void {
+		$stream = Stream::of([0, 2, 4, 6, 8, 9]);
+		$result = $stream
+			->any(function (int $value): bool {
+				return $value > 9;
+			});
+
+		$this->assertFalse($result);
 	}
 
 	private function createIteratorThatCountCalls(\Iterator $range) {
