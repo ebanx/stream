@@ -767,16 +767,6 @@ OUTPUT;
 		$this->assertFalse($result);
 	}
 
-	private function assertStreamIsNotConsumableAnymore(Stream $remaining_stream): void {
-		$this->expectException(\Exception::class);
-		$this->expectExceptionMessage('Cannot rewind a generator that was already run');
-		$remaining_stream->collect();
-	}
-
-	private function assertSourceIteratorWasNotFullyConsumed(Stream $source): void {
-		$this->assertTrue($source->valid(), 'Source iterator was fully consumed, although there is no need for it');
-	}
-
 	private function createIteratorThatCountCalls(\Iterator $range) {
 		return new class($range) implements \Iterator {
 			public $rewind_calls = 0;
