@@ -19,12 +19,12 @@ jobs:
           args: --no-check-publish --no-check-version --strict
       - uses: php-actions/composer@v5
         with:
-          php_version: 7.1
+          php_version: 7.4
           version: 2
           progress: yes
       - name: PHPUnit Tests
         uses: php-actions/phpunit@v2
         with:
           configuration: test/phpunit.xml
-          php_version: 7.1
+          php_version: 7.4
           version: 7.5
