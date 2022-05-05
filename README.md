@@ -23,6 +23,13 @@ $result = Stream::rangeInt(0, 10)
     ->collect();
 ```
 
+### Installation
+Install the library with [Composer](https://getcomposer.org) by running
+
+```PHP
+composer require ebanx/stream
+```
+
 ### Licensing
 
 We are distributing it using the permissive MIT license. Feel free to do whatever you want with it.
