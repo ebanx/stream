@@ -11,23 +11,23 @@ class Stream implements \Iterator, \Countable {
 		$this->source_iterator = $source_iterator;
 	}
 
-	public function current() {
+	public function current(): mixed {
 		return $this->source_iterator->current();
 	}
 
-	public function next() {
+	public function next(): void {
 		$this->source_iterator->next();
 	}
 
-	public function key() {
+	public function key(): mixed {
 		return $this->source_iterator->key();
 	}
 
-	public function valid() {
+	public function valid(): bool {
 		return $this->source_iterator->valid();
 	}
 
-	public function rewind() {
+	public function rewind(): void {
 		$this->source_iterator->rewind();
 	}
 
