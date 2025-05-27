@@ -7,6 +7,20 @@ use PHPUnit\Framework\TestCase;
 
 class StreamTest extends TestCase {
 
+	public function testDistinct() {
+		$cls = new class () {};
+
+		$a = new $cls();
+		$b = new $cls();
+
+		$this->assertEquals([], Stream::of([])->distinct()->collect());
+		$this->assertEquals([1], Stream::of([1])->distinct()->collect());
+		$this->assertEquals([1], Stream::of([1, 1])->distinct()->collect());
+		$this->assertEquals([true, false], Stream::of([true, false])->distinct()->collect());
+		$this->assertEquals([$a, $b], Stream::of([$a, $b, $a])->distinct()->collect());
+		$this->assertEquals([true, false], Stream::of([true, false, false, null, 0])->distinct($id=fn ($item) => !$item)->collect());
+	}
+
 	public function testStreamIsCountable(): void {
 		$this->assertCount(0, Stream::of([]));
 		$this->assertCount(1, Stream::of(['a']));

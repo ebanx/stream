@@ -92,6 +92,36 @@ class Stream implements \Iterator, \Countable {
 	}
 
 	/**
+	 * Returns a new stream containing only unique values from this stream.
+	 *
+	 * By default, objects are compared to their ids (through <code>spl_object_id()</code>), pass
+	 * in a <code>callable $id</code> to change this behavior.
+	 *
+	 * Items are yielded by the order of their first occurrence.
+	 *
+	 * @param callable|null $id can be used to change items identity, by default <code>is_object($item) ? spl_object_id($item) : $item</code> is used.
+	 * @return self
+	 */
+	public function distinct(callable $id = null): self {
+		if (is_null($id)) {
+			$id = fn ($item) => is_object($item) ? spl_object_id($item) : $item;
+		}
+		$generator = function () use ($id) {
+			$visited = [];
+			foreach ($this->source_iterator as $item) {
+				$item_id = $id($item);
+				if (array_key_exists($item_id, $visited)) {
+					continue;
+				}
+				$visited[$item_id] = true;
+				yield $item;
+			}
+		};
+
+		return new self($generator());
+	}
+
+	/**
 	 * Collects all stream elements into an array.
 	 *
 	 * @return array
